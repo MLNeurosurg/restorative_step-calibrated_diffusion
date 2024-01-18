@@ -1,0 +1,48 @@
+data:
+  data_root: /
+  data_spreadsheet: ../experiments/LQ_paths_cleaned_sumsampled
+  from_patient_spreadsheet: False
+  image_save_path: saved_results 
+  image_size: 256
+diffusion:
+  restore_timesteps: 500
+  timesteps: 1000
+  beta_schedule: cosine # linear, quadratic, cosine, sigmoid
+model:
+  model_type: unet # unet, imagen
+  in_channels: 2 # number of input channels 
+  init_dim: 128 # should be >= 128 https://nonint.com/2022/05/04/friends-dont-let-friends-train-small-diffusion-models/
+  out_dim: 2
+  dim_mults: [1, 2, 2, 4] # can include 8, but model is over 1 billion params
+  # dim_mults: [1, 2, 4, 8] # can include 8, but model is over 1 billion params
+  with_time_emb: True
+  resnet_block_groups: 8
+  use_convnext: True
+  convnext_mult: 2
+  model_save_path: saved_models
+train:
+  sheetname: best_series
+  batch_size: 8
+  n_epochs: 10
+  iters: 10000 # defines how many minibatches in each epoch
+  lr: 0.000002
+  weight_decay: 0.0 # default value
+  loss_type: l1 # l1, l2, huber
+  metrics_save_path: saved_results
+val:
+  val_type: cases # cases or random
+  val_cases: [NIO_DS_10022] # list of patient NIO_nums
+  modulo_save: 2
+  modulo_diffusion_save: 50
+  val_number: 5 # number of random cases to holdout for validation
+  random_seed: 1
+  sheetname: validation # validation datasheet from spreadsheet
+  metrics_save_path: saved_results
+inference:
+  classifier: defaultclassifier200.pt
+  model_ckpt: saved_models_cosine/pretrain_10_5-4-2023_model.pt
+  result_path: inferred_results_cosine_default_200
+  skip_threshold: -1
+  diffusion_skip_step: 10
+
+
