@@ -156,7 +156,7 @@ for idx,batch in enumerate(train_loader):
     if begin < config['inference']['skip_threshold']:
         print('skipped '+str(idx)+' because '+str(begin))
         continue
-    outs = diffusion.sample(model,batch['image'].float().cuda(),1,begin=begin+1,orig=batch['image'].float().cuda())
+    outs = diffusion.sample(model,batch['image'].float().cuda(),1,begin=begin,orig=batch['image'].float().cuda())
     rescaled_imgs = []
     raw_imgs = []
     for i, img in enumerate(outs):

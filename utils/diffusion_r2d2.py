@@ -8,20 +8,7 @@ from tqdm.auto import tqdm
 from scipy.linalg import dft
 from data.transforms import reverse_transforms
 from numpy.linalg import inv
-"""
-IDEA: Randomly change upscale or downscale the beta schedule
-Ways to make the denoising less deterministic
 
-One problem that we will need to address is how to handle variable amounts of:
-1) Noise in the image, so how far back to go in the diffusion
-2) How to vary the amount of the noise for each example at each timestep
-3) Can we introduce other data corruptions in the image
-
-The denoising process must also learn to restore the images
-
-Combine generative and the image restoration >> diffusion process
-
-"""
 
 
 class Diffusion(object):

@@ -175,7 +175,7 @@ for idx,batch in enumerate(train_loader):
             inimg2 = torch.FloatTensor(outs1[-1]).to(device)
             outs.append(outs1[-1])
             break
-        outs1 = diffusion.sample(model,inimg2,1,begin=begin+1,step_limit = config['inference']['recalibrate_steps'])
+        outs1 = diffusion.sample(model,inimg2,1,begin=begin,step_limit = config['inference']['recalibrate_steps'])
         inimg2 = torch.FloatTensor(outs1[-1]).to(device)
         outs.append(outs1[-1])
     if skipped:

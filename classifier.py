@@ -15,7 +15,7 @@ class TClassifier(torch.nn.Module):
         self.head  = torch.nn.Sequential(torch.nn.Linear(2048,100),torch.nn.ReLU(),torch.nn.Linear(100,1))
     def forward(self,x):
         outs1 = self.resnet(x)['pooler_output'].squeeze()
-        return self.head(outs1)
+        return self.head(outs1)+1
 
 import random
 from tqdm import tqdm

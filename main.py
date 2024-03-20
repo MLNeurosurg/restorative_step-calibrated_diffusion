@@ -1,9 +1,4 @@
-"""
-# https://huggingface.co/blog/annotated-diffusion
-# This tutorial is just for me to fully understand diffusion models.
 
-https://github.com/lucidrains/denoising-diffusion-pytorch
-"""
 import sys
 from typing import TextIO
 import json
@@ -19,23 +14,21 @@ from torch import nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
-from data.data_utils import rescale_channels, get_third_channel
 from torchvision.utils import save_image
 from torchsummary import summary
-from classifier import TClassifier
-from pathlib import Path
+
 from models.model import Unet
 from models.model_utils import save_model
 
 from data.data_utils import get_data, train_validation_split
 from data.dataset import Diffusion_Dataset
-from data.transforms import preprocess_transforms,preprocess_numpy
+from data.transforms import preprocess_transforms
 # from utils.diffusion import Diffusion
 from utils.diffusion_restore import Diffusion
 
 from runner import diffusion_runner
-import numpy as np
-torch.random.manual_seed(23)
+
+
 #### OPTIONS ###################################################################
 # get config file
 def parse_args() -> TextIO:
@@ -59,7 +52,7 @@ def main():
     elif cmd_input.name.endswith(".yaml") or cf_fd.name.endswith(".yml"):
         return yaml.load(cf_fd, Loader=yaml.FullLoader)
 
-device = 'cuda:0'
+
 config = main()
 
 #### DATA PREP #################################################################
@@ -81,7 +74,8 @@ assert len(train_data) + len(val_data) == len(image_data), "Data split error"
 diffusion = Diffusion(restore_timesteps=config['diffusion']['restore_timesteps'],
                       timesteps=config['diffusion']['timesteps'],
                       beta_schedule=config['diffusion']['beta_schedule'],
-                      image_size=config['data']['image_size'])
+                      image_size=config['data']['image_size'],
+                      cond=config['model']['cond'])
 
 # #### GET DATALOADERS #########################################################
 # train dataloader
@@ -89,15 +83,30 @@ train_dataset = Diffusion_Dataset(
     data=train_data,
     img_root=config['data']['data_root'],
     image_transforms=preprocess_transforms(
-        image_size=config['data']['image_size'],centercrop=True),
+        image_size=config['data']['image_size']),
 )
 train_loader = DataLoader(train_dataset,
-                          #batch_size=config['train']['batch_size'],
-                          batch_size=1,
-                          shuffle=False,
+                          batch_size=config['train']['batch_size'],
+                          shuffle=True,
                           num_workers=5,
                           pin_memory=True,
                           prefetch_factor=3)
+print(len(train_loader))
+
+# validation dataloader
+val_dataset = Diffusion_Dataset(
+    data=val_data,
+    img_root=config['data']['data_root'],
+    image_transforms=preprocess_transforms(
+        image_size=config['data']['image_size']),
+)
+val_loader = DataLoader(val_dataset,
+                        batch_size=config['train']['batch_size'],
+                        shuffle=False,
+                        num_workers=5,
+                        pin_memory=True,
+                        prefetch_factor=3)
+print(len(val_loader))
 
 # #### GET MODELS ##############################################################
 if config['model']['model_type'] == 'unet':
@@ -109,20 +118,19 @@ if config['model']['model_type'] == 'unet':
                 with_time_emb=config['model']['with_time_emb'],
                 resnet_block_groups=config['model']['resnet_block_groups'],
                 use_convnext=config['model']['use_convnext'],
-                convnext_mult=config['model']['convnext_mult']).float()
+                convnext_mult=config['model']['convnext_mult'],
+                cond=config['model']['cond']).float()
 if config['model']['model_type'] == 'imagen':
     pass
 
-model.load_state_dict(torch.load(config['inference']['model_ckpt'],map_location='cpu'))
-model.eval()
+if 'ckpt' in config['model']:
+    sd = torch.load(config['model']['ckpt'])
+    model.load_state_dict(sd)
+    print('State dict loaded!')
 
 print(sum(p.numel() for p in model.parameters()) / 1e6)
-model = model.to(device)
+model = model.to('cuda:0')
 
-# Distribute the models to the device
-#if torch.cuda.device_count() > 1:
-#    model = nn.DataParallel(model)
-#    print(f"Using {torch.cuda.device_count()} GPUs.")
 # summary(model, input_size=(config['model']['in_channels'],
 #                         config['data']['image_size'],
 #                         config['data']['image_size']))
@@ -134,56 +142,51 @@ optimizer = Adam(model.parameters(), lr=config['train']['lr'])
 # mark the time for saving results and models
 now = datetime.datetime.now()
 now = f'{str(now.day)}-{str(now.month)}-{str(now.year)}'
-classifier = torch.load(config['inference']['classifier'],map_location='cpu').to(device)
-for idx,batch in enumerate(train_loader):
-    begins = []
-    skipped = False
-    inimg2 = batch['image'].float().to(device)
-    outs = [inimg2.cpu().numpy()]
-    for j in range(config['inference']['max_rounds']):
-        inimg = torch.zeros(1,3,256,256).to(device)
-        inimg[:,1:3,:,:] = inimg2
-        begin = classifier(inimg).long().item()
-        if begin > config['inference']['largethreshold']:
-            begin = config['inference']['largethreshold']
-        elif j==0 and  config['inference']['largeonly']:
-            skipped = True
-            break
-        if j==0 and begin < config['inference']['skip_threshold']:
-            print('skipped '+str(idx)+' because '+str(begin))
-            skipped = True
-            break
-        begins.append(begin)
-        if begin < config['inference']['recalibrate_threshold'] or j == config['inference']['max_rounds']-1:
-            outs1 = diffusion.sample(model,inimg2,1,begin=begin+3)
-            inimg2 = torch.FloatTensor(outs1[-1]).to(device)
-            outs.append(outs1[-1])
-            break
-        outs1 = diffusion.sample(model,inimg2,1,begin=begin+1,step_limit = (begin+1)//2)
-        inimg2 = torch.FloatTensor(outs1[-1]).to(device)
-        outs.append(outs1[-1])
-    if skipped:
-        continue
-    rescaled_imgs = []
-    for i, img in enumerate(outs):
-        if True:
-            img = (img[0] + 1) / 2  # get out of batch and rescale
-            """
-            img = get_third_channel(img, channels_last=False)
-            img = np.swapaxes(img, 0, -1)
-            img = rescale_channels(img)
-            img = np.swapaxes(img, -1, 0)
-            rescaled_imgs.append(
-                torch.tensor(np.expand_dims(img, 0)))
-            """
-            rescaled_imgs.append(
-                preprocess_numpy(img).unsqueeze(0))
-    all_images = torch.cat(rescaled_imgs, dim=0)
 
-    # save images
-    results_folder = Path(config['inference']['result_path'])
-    results_folder.mkdir(exist_ok=True)
-    save_image(all_images,
-               results_folder / f'sample-{idx}-{begins}.png',
-               nrow=10)
-    torch.save(all_images[-1],results_folder/f'sample-{idx}.pt')
+# initialize dictionaries to store results
+for epoch in range(1, config['train']['n_epochs'] + 1):
+    print(f'======================== {epoch} =========================')
+    #"""
+    # TRAINING
+    train_losses = diffusion_runner(train_loader,
+                                    model,
+                                    diffusion,
+                                    optimizer,
+                                    train=True,
+                                    epoch=epoch,
+                                    loss_type=config['train']['loss_type'],
+                                    restore_timesteps=config['diffusion']['restore_timesteps'],
+                                    timesteps=config['diffusion']['timesteps'],
+                                    iterations=config['train']['iters'],
+                                    randomzero=config['diffusion']['randomzero'],
+                                    cond=model.cond)
+    #"""
+    with torch.no_grad():
+    # VALIDATION
+        val_losses = diffusion_runner(val_loader,
+                                      model,
+                                      diffusion,
+                                      optimizer,
+                                      train=False,
+                                      epoch=epoch,
+                                      loss_type=config['train']['loss_type'],
+                                      restore_timesteps=config['diffusion']['restore_timesteps'],
+                                      timesteps=config['diffusion']['timesteps'],
+                                      modulo_save=config['val']['modulo_save'],
+                                      save_path=config['data']['image_save_path'],
+                                      randomzero=config['diffusion']['randomzero'],
+                                      cond=model.cond)
+
+    save_model(
+        model,
+        f'{config["model"]["model_save_path"]}/pretrain_{epoch}_{now}_model')
+
+    # save the model
+    torch.save(
+        train_losses,
+        f'{config["train"]["metrics_save_path"]}/pretrain_{epoch}_{now}_metrics.pt'
+    )
+    torch.save(
+        val_losses,
+        f'{config["val"]["metrics_save_path"]}/pretrain_{epoch}_{now}_metrics.pt'
+    )

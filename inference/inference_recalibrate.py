@@ -1,9 +1,4 @@
-"""
-# https://huggingface.co/blog/annotated-diffusion
-# This tutorial is just for me to fully understand diffusion models.
 
-https://github.com/lucidrains/denoising-diffusion-pytorch
-"""
 import copy
 import sys
 from typing import TextIO

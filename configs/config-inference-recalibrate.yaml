@@ -40,25 +40,13 @@ val:
   metrics_save_path: saved_results
 inference:
   max_rounds: 15
-  #classifier: ensamblecosine.pt
-  #classifier: classifiercosine14.pt
   recalibrate_steps: 10
-  #model_ckpt: saved_models_cosine/pretrain_10_5-4-2023_model.pt 
-  #model_ckpt: saved_models_cosine_new_data/pretrain_10_31-5-2023_model.pt 
-  #model_ckpt: saved_models_cosine_new_data2/pretrain_10_31-5-2023_model.pt 
-  #model_ckpt: saved_models_cosine_ft_new_data/pretrain_10_13-6-2023_model.pt 
-  #model_ckpt: saved_models_cosine_ft_new_data2/pretrain_10_12-6-2023_model.pt 
   skip_threshold: -1
   recalibrate_threshold: 10
-  #classifier: classifiernew9.pt
-  #model_ckpt: saved_models/pretrain_10_26-3-2023_model.pt
   largeonly: false
-  #model_ckpt: saved_models_cosine_4Konly/pretrain_20_20-6-2023_model.pt 
-  #model_ckpt: saved_models/pretrain_10_26-3-2023_model.pt
-  #classifier: classifier4kcosine500.pt
-  classifier: classifiercosinemc30.pt
-  result_path: hequnpaired/inferred_mc
+  classifier: classifier4kcosine500.pt
+  result_path: hequnpaired/inferred_recalibrate
   model_ckpt: saved_models_cosine_ft_4konly2/pretrain_50_26-6-2023_model.pt
-  result_path_raw: rawunpaired/inferred_mc
+  result_path_raw: rawunpaired/inferred_recalibrate
   largethreshold: 190
 

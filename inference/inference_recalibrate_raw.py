@@ -160,7 +160,7 @@ for idx,batch in enumerate(train_loader):
             break
         begins.append(begin)
         if begin < config['inference']['recalibrate_threshold'] or j == config['inference']['max_rounds']-1:
-            outs1 = diffusion.sample(model,inimg2,1,begin=begin+3)
+            outs1 = diffusion.sample(model,inimg2,1,begin=begin)
             inimg2 = torch.FloatTensor(outs1[-1]).to(device)
             outs.append(outs1[-1])
             break
