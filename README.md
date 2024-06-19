@@ -3,7 +3,13 @@
 This is the code repository for our paper Step-Calibrated Diffusion for Biomedical Optical Image Restoration:
 
 ```
-BibTex To Be Added
+@misc{lyu2024stepcalibrated,
+      title={Step-Calibrated Diffusion for Biomedical Optical Image Restoration}, 
+      author={Yiwei Lyu and Sung Jik Cha and Cheng Jiang and Asadur Chowdury and Xinhai Hou and Edward Harake and Akhil Kondepudi and Christian Freudiger and Honglak Lee and Todd C. Hollon},
+      year={2024},
+      eprint={2403.13680},
+      archivePrefix={arXiv}
+}
 ```
 
 To train the model, use the following command:
