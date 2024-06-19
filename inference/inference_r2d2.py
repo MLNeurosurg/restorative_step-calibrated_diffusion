@@ -32,7 +32,7 @@ from data.data_utils import get_data, train_validation_split
 from data.dataset import Diffusion_Dataset
 from data.transforms import preprocess_transforms,preprocess_numpy
 # from utils.diffusion import Diffusion
-from ensamble import Ensamble
+#from ensamble import Ensamble
 from utils.diffusion_r2d2 import Diffusion
 from defaultclassifier import DefaultClassifier
 from runner import diffusion_runner

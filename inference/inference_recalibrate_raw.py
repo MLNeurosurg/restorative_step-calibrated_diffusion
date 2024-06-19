@@ -33,7 +33,7 @@ from data.transforms import preprocess_transforms,preprocess_numpy
 from utils.diffusion_restore import Diffusion
 
 from runner import diffusion_runner
-from ensamble import Ensamble
+#:from ensamble import Ensamble
 import numpy as np
 torch.random.manual_seed(23)
 #### OPTIONS ###################################################################

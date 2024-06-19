@@ -32,7 +32,7 @@ from data.dataset import Diffusion_Dataset
 from data.transforms import preprocess_transforms,preprocess_numpy
 # from utils.diffusion import Diffusion
 from utils.diffusion_restore import Diffusion
-from ensamble import Ensamble
+#from ensamble import Ensamble
 
 from runner import diffusion_runner
 import numpy as np
