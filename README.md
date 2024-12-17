@@ -12,6 +12,8 @@ This is the code repository for our paper Step-Calibrated Diffusion for Biomedic
 }
 ```
 
+The full paper and full appendix are available in `full_paper.pdf`. 
+
 To train the model, use the following command:
 
 ```
