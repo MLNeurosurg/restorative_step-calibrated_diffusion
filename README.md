@@ -12,7 +12,7 @@ This is the code repository for our paper Step-Calibrated Diffusion for Biomedic
 }
 ```
 
-The full paper and full appendix are available in `full_paper.pdf`. 
+The full paper and full appendix are available in `full_paper_and_appendix.pdf`. Please note that due to the size of the file, Github preview may not display all figures properly. Please download the pdf and view locally. 
 
 To train the model, use the following command:
 
